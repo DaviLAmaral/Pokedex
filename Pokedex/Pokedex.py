@@ -62,7 +62,7 @@ for c in range(len(pokemonstats)):
 
 def carregar_icone_tipo(tipo):
     try:
-        icone_path = f"images\\{str(tipo).title()} type.png"
+        icone_path = f"Pokedex\\images\\{str(tipo).title()} type.png"
         icone = tk.PhotoImage(file=icone_path)
         
         # Redimensionar a imagem para o tamanho desejado (por exemplo, 32x32 pixels)
@@ -203,7 +203,7 @@ def aleatorio():
 # Criar a janela principal
 root = tk.Tk()
 root.title("Pokedex")
-root.iconbitmap("images/Pokedex.ico")
+root.iconbitmap("Pokedex/images/Pokedex.ico")
 root.geometry("450x525")
 
 label_busca = tk.Label(root,text="Insert the Pokemon name:")
