@@ -1,4 +1,22 @@
 ###SETUP BIBLIOTECAS###
+import subprocess
+
+bibliotecas = ['tkinter', 'Pillow', 'requests', 'io', 'beautifulsoup4', 'random', 're']
+
+def instalar_bibliotecas(bibliotecas):
+    for biblioteca in bibliotecas:
+        try:
+            __import__(biblioteca)
+            print(f'{biblioteca} já está instalada.')
+        except ImportError:
+            try:
+                subprocess.check_call(['pip', 'install', biblioteca])
+                print(f'{biblioteca} instalada com sucesso!')
+            except Exception as e:
+                print(f'Erro ao instalar {biblioteca}: {str(e)}')
+if __name__ == '__main__':
+    instalar_bibliotecas(bibliotecas)
+
 import tkinter as tk
 from PIL import Image, ImageTk
 import requests
@@ -7,6 +25,9 @@ from bs4 import BeautifulSoup
 import random
 import re
 
+
+if __name__ == '__main__':
+    instalar_bibliotecas(bibliotecas)
 ###SETUP LISTAS PADRÃO###
 pokemonimg = []
 pokemonname = []
@@ -89,7 +110,7 @@ def habilidades():
         if "ability/" in str(pk):
             ab = (str(pk).split("ability/",1)[1])
             abl.append(str(ab).split('" title="',1)[0].title().replace("-"," "))
-            if "ability/" in str(ab):
+            if "ability/" in str(ab) and "Mega" not in pokemonname[current_index]:
                 ab = (str(ab).split("ability/",1)[1])
                 ab2 = ab.split('" title="',1)[0].title().replace("-"," ") 
                 if "ability/" in str(ab):
@@ -230,8 +251,12 @@ def mostrar_imagem_selecionada():
         label_imagem.config(image=img)
         label_imagem.image = img
         label_id.config(text="{} {}".format(pokemonid[current_index], pokemonname[current_index]))
-        label_abilities1.config(text="{}".format(abl[0]),cursor="hand2")
-        label_abilities1.bind("<Button-1>", lambda event, ability=str(abl[0]).replace(" ","-"): abrir_janela(ability))
+        if "Mega" not in pokemonname[current_index]:
+            label_abilities1.config(text="{}".format(abl[0]),cursor="hand2")
+            label_abilities1.bind("<Button-1>", lambda event, ability=str(abl[0]).replace(" ","-"): abrir_janela(ability))
+        elif "Mega" in pokemonname[current_index]:
+            label_abilities1.config(text="{}".format(abl[1]),cursor="hand2")
+            label_abilities1.bind("<Button-1>", lambda event, ability=str(abl[1]).replace(" ","-"): abrir_janela(ability))
         label_abilities2.config(text="{}".format(ab2),cursor="hand2")
         label_abilities2.bind("<Button-1>", lambda event, ability=ab2.replace(" (Hidden Ability)","").replace(" ","-"): abrir_janela(ability))
         label_abilities3.config(text="{}".format(ab3),cursor="hand2")
