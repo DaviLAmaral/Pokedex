@@ -1,22 +1,5 @@
-###SETUP BIBLIOTECAS###
-import subprocess
-
-bibliotecas = ['tkinter', 'Pillow', 'requests', 'io', 'beautifulsoup4', 'random', 're']
-
-def instalar_bibliotecas(bibliotecas):
-    for biblioteca in bibliotecas:
-        try:
-            __import__(biblioteca)
-            print(f'{biblioteca} já está instalada.')
-        except ImportError:
-            try:
-                subprocess.check_call(['pip', 'install', biblioteca])
-                print(f'{biblioteca} instalada com sucesso!')
-            except Exception as e:
-                print(f'Erro ao instalar {biblioteca}: {str(e)}')
-if __name__ == '__main__':
-    instalar_bibliotecas(bibliotecas)
-
+import matplotlib.pyplot as plt
+import numpy as np
 import tkinter as tk
 from PIL import Image, ImageTk
 import requests
@@ -25,9 +8,6 @@ from bs4 import BeautifulSoup
 import random
 import re
 
-
-if __name__ == '__main__':
-    instalar_bibliotecas(bibliotecas)
 ###SETUP LISTAS PADRÃO###
 pokemonimg = []
 pokemonname = []
@@ -43,7 +23,7 @@ spdef = []
 speed = []
 indices_originais = []
 
-current_index = 0  # Índice inicial para exibir a primeira imagem
+current_index = 0 # Índice inicial para exibir a primeira imagem
 
 ###SETUP P/ EXTRAÇÃO DE HTML DAS PÁGINAS###
 headers = {
@@ -96,27 +76,28 @@ def habilidades():
     abl = []
     ab2 = ""
     ab3 = ""
-    if current_index < 929:
+    if current_index <= 929:
         page = pkmnlinks[current_index]
-    elif current_index == 929:
-        page = pkmnlinks[current_index] 
-        abl.append("Battle Armor")
     else:
         page = pkmnlinks[current_index-1] 
     pageTree = requests.get(page, headers=headers)
     pageSoup = BeautifulSoup(pageTree.content, "html.parser")
     pkpage = pageSoup.find_all("td")
-    for pk in pkpage:   
-        if "ability/" in str(pk):
-            ab = (str(pk).split("ability/",1)[1])
-            abl.append(str(ab).split('" title="',1)[0].title().replace("-"," "))
-            if "ability/" in str(ab) and "Mega" not in pokemonname[current_index]:
-                ab = (str(ab).split("ability/",1)[1])
-                ab2 = ab.split('" title="',1)[0].title().replace("-"," ") 
-                if "ability/" in str(ab):
-                    ab3 = "{} (Hidden Ability)".format(ab.split("ability/",1)[1].split('" title="',1)[0].title().replace("-"," "))
-                else:
-                    ab2 = "{} (Hidden Ability)".format(ab2)
+    qab = 0
+    for pk in pkpage:
+        if "ability" in str(pk):
+            qab = str(pk).count("ability/")
+            abl.append(re.findall(r'<a href=".*?">(.*?)</a>', str(pk)))
+    if len(abl[0]) > 1:
+        abl[0][-1] = "{} (Hidden Ability)".format(abl[0][-1])
+    if len(abl) > 1:
+        if len(abl[1]) > 1:
+            abl[1][-1] = "{} (Hidden Ability)".format(abl[1][-1])
+    if len(abl) > 2:
+        if len(abl[2]) > 1:
+            abl[2][-1] = "{} (Hidden Ability)".format(abl[2][-1])
+    if current_index == 929:
+        abl[0][0] = "Battle Armor"
 
 ###CARREGAR IMAGEM DOS ÍCONES CORRESPONDENTES AO TIPO DO POKEMON###
 def carregar_icone_tipo(tipo):
@@ -238,7 +219,58 @@ def abrir_janela(ability):
     botao_fechar = tk.Button(nova_janela, text="Close", command=nova_janela.destroy)
     botao_fechar.pack()
  
-###MOSTRA O SPRITE E DADOS DO POKEMON SELECIONADO###  
+
+def radar():
+    global current_index
+    # Dados para o gráfico radar (por exemplo, pontuações em diferentes categorias)
+    categorias = ['Speed', 'Sp.Atk', 'Atk', 'HP', 'Def', 'Sp.Def']
+    pontuacoes = [float(speed[current_index]), float(spatk[current_index]), float(atk[current_index]), float(hp[current_index]), float(deff[current_index]), float(spdef[current_index])]
+
+    # Valor máximo permitido no rótulo do eixo radial
+    if max(pontuacoes) <= 125:
+        valor_maximo_rotulo = 125
+    else:
+        valor_maximo_rotulo = max(pontuacoes)
+
+    # Número de categorias
+    num_categorias = len(categorias)
+
+    # Ângulos para cada categoria (hexagonal)
+    angulos = np.linspace(0, 2 * np.pi, num_categorias, endpoint=False).tolist()
+    angulos += angulos[:1]  # Para fechar o gráfico
+
+    # Valores para o gráfico radar
+    valores = pontuacoes + pontuacoes[:1]
+
+    # Crie uma figura vazia
+    plt.figure(figsize=(6, 6))
+
+    # Adicione subplots polar para criar o gráfico radar
+    ax = plt.subplot(111, polar=True)
+
+    # Plote os dados
+    plt.plot(angulos, valores, 'o-', linewidth=2)
+
+    # Preencha a área sob o gráfico
+    plt.fill(angulos, valores, alpha=0.25)
+
+    # Adicione rótulos de categoria
+    plt.thetagrids(np.degrees(angulos[:-1]), categorias)
+
+    plt.title(pokemonname[current_index])
+
+    # Defina o valor máximo no eixo radial para o rótulo
+    ax.set_rmax(valor_maximo_rotulo)
+
+    # Adicione números ao lado das categorias
+    for i, valor in enumerate(valores[:-1]):
+        ax.text(angulos[i], valor + 0.2, str(int(valor)), fontsize=12)
+
+    # Mostrar o gráfico
+    plt.show()
+
+    
+###MOSTRA O SPRITE E DADOS DO POKEMON SELECIONADO###
 def mostrar_imagem_selecionada():
     global current_index
     try:
@@ -251,16 +283,40 @@ def mostrar_imagem_selecionada():
         label_imagem.config(image=img)
         label_imagem.image = img
         label_id.config(text="{} {}".format(pokemonid[current_index], pokemonname[current_index]))
-        if "Mega" not in pokemonname[current_index]:
-            label_abilities1.config(text="{}".format(abl[0]),cursor="hand2")
-            label_abilities1.bind("<Button-1>", lambda event, ability=str(abl[0]).replace(" ","-"): abrir_janela(ability))
-        elif "Mega" in pokemonname[current_index]:
-            label_abilities1.config(text="{}".format(abl[1]),cursor="hand2")
-            label_abilities1.bind("<Button-1>", lambda event, ability=str(abl[1]).replace(" ","-"): abrir_janela(ability))
-        label_abilities2.config(text="{}".format(ab2),cursor="hand2")
-        label_abilities2.bind("<Button-1>", lambda event, ability=ab2.replace(" (Hidden Ability)","").replace(" ","-"): abrir_janela(ability))
-        label_abilities3.config(text="{}".format(ab3),cursor="hand2")
-        label_abilities3.bind("<Button-1>", lambda event, ability=ab3.replace(" (Hidden Ability)","").replace(" ","-"): abrir_janela(ability))
+        ex2 = ["White-Striped","Black","Galarian Zen Mode","Galarian Standard Mode","Complete Forme","Dusk","White Plumage","Yellow Plumage"]
+        ex1 = ["Alolan", "Galarian", "Paldean", "Hisuian","Mega","White","Blue-Striped","Therian","Origin Forme","Sky Forme","Own Tempo Rockruff","Midnight","Low Key","Indeedee (Female)","Ice Rider","Shadow Rider","Bloodmoon","Oinkologne (Female)","Roaming"]
+        pokemon_name = str(pokemonname[current_index])
+        for y in ex2:
+            if y in pokemon_name or ("Mega" in pokemon_name and "Mega" in pokemonname[current_index-1]):
+                abilities = abl[2]  # Habilidades da Mega Evolução "y"
+                break
+            else:
+                # Verifique se o nome do Pokémon contém algum dos valores em "ex"
+                for x in ex1:
+                    if x in pokemon_name:
+                        abilities = abl[1]  # Habilidades de uma forma especial/regional
+                        break
+                else:
+                    abilities = abl[0]  # Habilidades padrão do Pokémon
+                if "Ultra Necrozma" in pokemon_name:
+                    abilities = abl[3]
+
+        # Configure os rótulos de habilidades
+        label_abilities1.config(text="{}".format(abilities[0]), cursor="hand2")
+        label_abilities1.bind("<Button-1>", lambda event, ability=str(abilities[0]).replace(" (Hidden Ability)","").replace(" ", "-").replace("'",""): abrir_janela(ability))
+
+        if len(abilities) > 1:
+            label_abilities2.config(text="{}".format(abilities[1]), cursor="hand2")
+            label_abilities2.bind("<Button-1>", lambda event, ability=str(abilities[1]).replace(" (Hidden Ability)","").replace(" ", "-").replace("'",""): abrir_janela(ability))
+        else:
+            label_abilities2.config(text="")
+
+        if len(abilities) > 2:
+            label_abilities3.config(text="{}".format(abilities[2]), cursor="hand2")
+            label_abilities3.bind("<Button-1>", lambda event, ability=str(abilities[2]).replace(" (Hidden Ability)","").replace(" ", "-").replace("'",""): abrir_janela(ability))
+        else:
+            label_abilities3.config(text="")
+    
         label_stats.config(text="Stats Total: {}\n\nHP: {}\n\nAttack: {}\n\nDefense: {}\n\nSp.Attack: {}\n\nSp.Defense: {}\n\nSpeed: {}\n\n".format(int(hp[current_index]) + int(atk[current_index]) + int(deff[current_index]) + int(spatk[current_index]) + int(spdef[current_index]) + int(speed[current_index]),hp[current_index], atk[current_index], deff[current_index], spatk[current_index], spdef[current_index], speed[current_index]))
         desenhar_barras()
 
@@ -362,6 +418,9 @@ canvas_barras = tk.Canvas(frame_info, width=200, height=200)
 canvas_barras.pack(side=tk.LEFT)  
 
 lista_resultados = tk.Listbox(frame_info)
+
+botao_radar = tk.Button(frame_info,text="Show Radar Chart",command=radar)
+botao_radar.pack()
 habilidades()
 mostrar_imagem_selecionada()
 root.mainloop()
