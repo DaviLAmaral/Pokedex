@@ -102,7 +102,7 @@ def habilidades():
 ###CARREGAR IMAGEM DOS ÍCONES CORRESPONDENTES AO TIPO DO POKEMON###
 def carregar_icone_tipo(tipo):
     try:
-        icone_path = f"Pokedex\\images\\{str(tipo).title()} type.png"
+        icone_path = f"Pokedex-1.0\\Pokedex\\images\\{str(tipo).title()} type.png"
         icone = tk.PhotoImage(file=icone_path)
         
         icone = icone.subsample(7, 7) 
@@ -364,7 +364,7 @@ def aleatorio():
 ###CRIA A JANELA PRINCIPAL E OS DEMAIS ELEMENTOS PADRÃO###
 root = tk.Tk()
 root.title("Pokedex")
-root.iconbitmap("Pokedex/images/Pokedex.ico")
+root.iconbitmap("Pokedex-1.0/Pokedex/images/Pokedex.ico")
 root.geometry("450x595")
 
 label_busca = tk.Label(root,text="Insert the Pokemon name:")
